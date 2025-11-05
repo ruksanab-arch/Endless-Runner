@@ -2,13 +2,21 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody))]
 public class PlayerMovement : MonoBehaviour
 {
-    public float forwardSpeed = 8f;   // forward movement speed
-    public float sideSpeed = 5f;      // left-right movement speed
-    public float jumpForce = 7f;
+    [Header("Movement Settings")]
+    public float forwardSpeed = 8f;   // Forward constant speed
+    public float sideSpeed = 5f;      // Left-right movement speed
+    public float jumpForce = 7f;      // Jump power
+
+    [Header("Ground Check")]
+    public Transform groundCheck;     // Empty object under player
+    public float groundDistance = 0.3f;
+    public LayerMask groundLayer;     // Assign your "Ground" layer here
 
     private Rigidbody rb;
+    private bool isGrounded;
 
     void Start()
     {
@@ -16,17 +24,38 @@ public class PlayerMovement : MonoBehaviour
         rb.constraints = RigidbodyConstraints.FreezeRotation;
     }
 
+    void Update()
+    {
+        // Check if player is on ground (raycast down)
+        isGrounded = Physics.Raycast(groundCheck.position, Vector3.down, groundDistance, groundLayer);
+
+        // Jump input
+        if (Input.GetButtonDown("Jump") && isGrounded)
+        {
+            rb.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
+        }
+    }
+
     void FixedUpdate()
     {
-        // Forward movement (constant)
+        // Forward constant movement
         Vector3 velocity = rb.velocity;
         velocity.z = forwardSpeed;
 
-        // Left and right movement using input keys (A/D or Left/Right)
-        float horizontalInput = Input.GetAxis("Horizontal"); // -1 (left) to +1 (right)
+        // Left-right movement
+        float horizontalInput = Input.GetAxis("Horizontal");
         velocity.x = horizontalInput * sideSpeed;
 
-        // Apply the new velocity
         rb.velocity = velocity;
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        // visualize ground check ray in Scene view
+        if (groundCheck != null)
+        {
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawLine(groundCheck.position, groundCheck.position + Vector3.down * groundDistance);
+        }
     }
 }
