@@ -6,17 +6,12 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement Settings")]
-    public float forwardSpeed = 8f;   // Forward constant speed
-    public float sideSpeed = 5f;      // Left-right movement speed
-    public float jumpForce = 7f;      // Jump power
-
-    [Header("Ground Check")]
-    public Transform groundCheck;     // Empty object under player
-    public float groundDistance = 0.3f;
-    public LayerMask groundLayer;     // Assign your "Ground" layer here
+    public float forwardSpeed = 8f;
+    public float sideSpeed = 5f;
+    public float jumpForce = 7f;
 
     private Rigidbody rb;
-    private bool isGrounded;
+    private bool isGrounded = true;
 
     void Start()
     {
@@ -26,13 +21,11 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        // Check if player is on ground (raycast down)
-        isGrounded = Physics.Raycast(groundCheck.position, Vector3.down, groundDistance, groundLayer);
-
         // Jump input
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
             rb.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
+            isGrounded = false;
         }
     }
 
@@ -49,13 +42,12 @@ public class PlayerMovement : MonoBehaviour
         rb.velocity = velocity;
     }
 
-    private void OnDrawGizmosSelected()
+    void OnCollisionEnter(Collision collision)
     {
-        // visualize ground check ray in Scene view
-        if (groundCheck != null)
+        // If we collide with anything tagged "Ground", we can jump again
+        if (collision.gameObject.CompareTag("Ground"))
         {
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawLine(groundCheck.position, groundCheck.position + Vector3.down * groundDistance);
+            isGrounded = true;
         }
     }
 }
