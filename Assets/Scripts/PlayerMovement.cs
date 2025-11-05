@@ -1,55 +1,44 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerCollision : MonoBehaviour
 {
-    private Rigidbody rb;
-    private Animator anim; // 🆕 Added for animations
-
-    public float forwardSpeed = 8f;
-    public float sideSpeed = 5f;
-    public float jumpForce = 6f;
-
-    private bool isGrounded = true;
+    private Animator animator;
+    private bool isGameOver = false;
 
     void Start()
     {
-        rb = GetComponent<Rigidbody>();
-        anim = GetComponent<Animator>(); // 🆕 Get the Animator
-
-        rb.constraints = RigidbodyConstraints.FreezeRotation;
-
-        // 🆕 Play running animation at start
-        anim.Play("Run_Static");  // use exact name from your animation clip
+        animator = GetComponent<Animator>();
     }
 
-    void Update()
+    void OnCollisionEnter(Collision collision)
     {
-        // Move left/right
-        float horizontalInput = Input.GetAxis("Horizontal");
-        Vector3 move = new Vector3(horizontalInput * sideSpeed, rb.velocity.y, forwardSpeed);
-        rb.velocity = move;
+        if (isGameOver) return; // Prevent multiple triggers
 
-        // Jump
-        if (isGrounded && Input.GetKeyDown(KeyCode.Space))
+        // Check if player hits an obstacle or rock
+        if (collision.gameObject.CompareTag("Obstacle") || collision.gameObject.CompareTag("Rock"))
         {
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-            isGrounded = false;
+            isGameOver = true;
+            Debug.Log("Game Over!");
 
-            // 🆕 Play jump animation
-            anim.Play("Jumping"); // change to your jump clip name
+            // Play death animation if available
+            if (animator != null)
+            {
+                animator.SetTrigger("Death");
+            }
+
+            // Stop player movement
+            GetComponent<PlayerMovement>().enabled = false;
+
+            // Restart or show Game Over UI after delay
+            Invoke("RestartGame", 2f);
         }
     }
 
-    private void OnCollisionEnter(Collision collision)
+    void RestartGame()
     {
-        if (collision.gameObject.CompareTag("Ground"))
-        {
-            isGrounded = true;
-
-            // 🆕 Return to running animation
-            anim.Play("Run_Static"); // use your running clip name
-        }
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }
