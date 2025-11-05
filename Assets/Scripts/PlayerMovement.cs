@@ -4,20 +4,23 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-     public float forwardSpeed = 8f; // Speed of forward movement
-    // Start is called before the first frame update
+    public float forwardSpeed = 8f; // how fast player moves forward
+    public float sideSpeed = 5f; 
+
+    private Rigidbody rb; // declare the Rigidbody variable here
+
     void Start()
     {
+        // get Rigidbody component on this GameObject
         rb = GetComponent<Rigidbody>();
 
-        // Prevent the player from rotating when colliding
+        // freeze rotations so player doesn't tip over
         rb.constraints = RigidbodyConstraints.FreezeRotation;
     }
 
-    // Update is called once per frame
     void FixedUpdate()
     {
-        // Move forward constantly along the Z-axis
+        // move forward constantly along Z-axis
         Vector3 velocity = rb.velocity;
         velocity.z = forwardSpeed;
         rb.velocity = velocity;
