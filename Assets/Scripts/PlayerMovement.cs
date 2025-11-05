@@ -4,25 +4,28 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    public float forwardSpeed = 8f; // how fast player moves forward
-    public float sideSpeed = 5f; 
+    public float forwardSpeed = 8f;   // forward movement speed
+    public float sideSpeed = 5f;      // left-right movement speed
 
-    private Rigidbody rb; // declare the Rigidbody variable here
+    private Rigidbody rb;
 
     void Start()
     {
-        // get Rigidbody component on this GameObject
         rb = GetComponent<Rigidbody>();
-
-        // freeze rotations so player doesn't tip over
         rb.constraints = RigidbodyConstraints.FreezeRotation;
     }
 
     void FixedUpdate()
     {
-        // move forward constantly along Z-axis
+        // Forward movement (constant)
         Vector3 velocity = rb.velocity;
         velocity.z = forwardSpeed;
+
+        // Left and right movement using input keys (A/D or Left/Right)
+        float horizontalInput = Input.GetAxis("Horizontal"); // -1 (left) to +1 (right)
+        velocity.x = horizontalInput * sideSpeed;
+
+        // Apply the new velocity
         rb.velocity = velocity;
     }
 }
