@@ -15,9 +15,9 @@ public class PlayerCollision : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        if (isGameOver) return; // prevent multiple triggers
+        if (isGameOver) return; // Prevent multiple triggers
 
-        // Check if player hits an obstacle or rock
+        // 🧱 If player hits obstacle or rock → Game Over
         if (collision.gameObject.CompareTag("Obstacle") || collision.gameObject.CompareTag("Rock"))
         {
             isGameOver = true;
@@ -25,15 +25,22 @@ public class PlayerCollision : MonoBehaviour
 
             // Play death animation if available
             if (animator != null)
-            {
                 animator.SetTrigger("Death");
-            }
 
             // Stop player movement
             GetComponent<PlayerMovement>().enabled = false;
 
-            // Restart the game after 2 seconds
+            // Restart or show Game Over UI after delay
             Invoke("RestartGame", 2f);
+        }
+
+        // 💎 If player collects a gem → Add score and destroy gem
+        if (collision.gameObject.CompareTag("Gem"))
+        {
+            if (ScoreManager.instance != null)
+                ScoreManager.instance.AddScore(10); // Add 10 points
+
+            Destroy(collision.gameObject); // Remove gem
         }
     }
 
