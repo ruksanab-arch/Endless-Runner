@@ -8,12 +8,18 @@ public class PlayerMovement : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        rb = GetComponent<Rigidbody>();
+
+        // Prevent the player from rotating when colliding
+        rb.constraints = RigidbodyConstraints.FreezeRotation;
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
-        
+        // Move forward constantly along the Z-axis
+        Vector3 velocity = rb.velocity;
+        velocity.z = forwardSpeed;
+        rb.velocity = velocity;
     }
 }
