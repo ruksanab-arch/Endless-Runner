@@ -6,6 +6,7 @@ public class PlayerMovement : MonoBehaviour
 {
     public float forwardSpeed = 8f;   // forward movement speed
     public float sideSpeed = 5f;      // left-right movement speed
+    public float jumpForce = 7f;
 
     private Rigidbody rb;
 
