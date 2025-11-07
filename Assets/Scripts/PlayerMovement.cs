@@ -1,23 +1,25 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI; // Needed for UI elements like score
+using UnityEngine.UI;
+using UnityEngine.SceneManagement; // For restarting or loading GameOver scene
 
 public class PlayerMovement : MonoBehaviour
 {
     private Rigidbody playerRb;
     private Animator playerAnim;
 
-    public float speed = 5f;      // Left/right movement speed
-    public float jumpForce = 7f;  // Jump strength
-    public float minX = -2f;      // Left boundary
-    public float maxX = 2f;       // Right boundary
+    public float speed = 5f;
+    public float jumpForce = 7f;
+    public float minX = -2f;
+    public float maxX = 2f;
 
     private bool isGrounded = true;
+    public bool isGameOver = false; // ✅ added
 
     // Score
     private int score = 0;
-    public Text scoreText; // Assign a UI Text in Inspector
+    public Text scoreText;
 
     void Start()
     {
@@ -28,6 +30,9 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        // ✅ Stop all movement when Game Over
+        if (isGameOver) return;
+
         // LEFT/RIGHT movement
         float horizontalInput = Input.GetAxis("Horizontal");
         Vector3 newVelocity = new Vector3(horizontalInput * speed, playerRb.velocity.y, 0);
@@ -60,16 +65,33 @@ public class PlayerMovement : MonoBehaviour
         if (collision.gameObject.CompareTag("Obstacle"))
         {
             Debug.Log("Hit Obstacle! Game Over!");
-            // Add game over logic here
+            GameOver(); // ✅ call game over function
         }
 
         if (collision.gameObject.CompareTag("Gem"))
         {
-            Destroy(collision.gameObject); // Remove gem
-            score += 1;                    // Increase score
-            UpdateScoreUI();               // Update UI
+            Destroy(collision.gameObject);
+            score += 1;
+            UpdateScoreUI();
             Debug.Log("Gem Collected! Score: " + score);
         }
+    }
+
+    public void GameOver()
+    {
+        isGameOver = true; // ✅ stop update logic
+        playerRb.velocity = Vector3.zero;
+        playerRb.isKinematic = true; // ✅ freeze physics
+        playerAnim.SetTrigger("Death"); // ✅ if you have a “Death” animation
+
+        // Optionally restart game after 2 seconds
+        Invoke(nameof(RestartGame), 2f);
+    }
+
+    void RestartGame()
+    {
+        // reload current scene
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     void UpdateScoreUI()

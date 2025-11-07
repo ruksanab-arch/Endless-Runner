@@ -5,15 +5,20 @@ using UnityEngine;
 public class MoveForward : MonoBehaviour
 {
     private float speed = 30;
+    private PlayerMovement playerMovementScript;
     // Start is called before the first frame update
     void Start()
     {
-        
+        playerMovementScript = GameObject.Find("Player").GetComponent<PlayerMovement>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        transform.Translate(Vector3.forward * Time.deltaTime * speed);
+        if (playerMovementScript != null && !playerMovementScript.isGameOver)
+        {
+            transform.Translate(Vector3.forward * Time.deltaTime * speed);
+        }
+        
     }
 }
