@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using UnityEngine.SceneManagement; // For restarting or loading GameOver scene
 
 public class PlayerMovement : MonoBehaviour
@@ -19,7 +20,7 @@ public class PlayerMovement : MonoBehaviour
 
     // Score
     private int score = 0;
-    public Text scoreText;
+    public TMP_Text scoreText;
     public GameObject gameOverPanel;
 
     void Start()
