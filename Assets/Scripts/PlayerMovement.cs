@@ -20,6 +20,7 @@ public class PlayerMovement : MonoBehaviour
     // Score
     private int score = 0;
     public Text scoreText;
+    public GameObject gameOverPanel;
 
     void Start()
     {
@@ -86,6 +87,10 @@ public class PlayerMovement : MonoBehaviour
 
         // Optionally restart game after 2 seconds
         Invoke(nameof(RestartGame), 2f);
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(true);
+        }
     }
 
     void RestartGame()
