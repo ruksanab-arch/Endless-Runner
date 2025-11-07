@@ -84,8 +84,7 @@ public class PlayerMovement : MonoBehaviour
         isGameOver = true; // ✅ stop update logic
         playerRb.velocity = Vector3.zero;
         playerRb.isKinematic = true; // ✅ freeze physics
-        playerAnim.SetTrigger("Death"); // ✅ if you have a “Death” animation
-
+        playerAnim.SetBool("isRunning", false);
         // Optionally restart game after 2 seconds
         Invoke(nameof(RestartGame), 2f);
         if (gameOverPanel != null)
