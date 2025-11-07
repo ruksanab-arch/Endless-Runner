@@ -17,7 +17,7 @@ public class MoveForwardGems : MonoBehaviour
     {
         if (playerMovementScript != null && !playerMovementScript.isGameOver)
         {
-            transform.Translate(Vector3.forward * Time.deltaTime * speed);
+            transform.Translate(Vector3.back * Time.deltaTime * speed);
         }
     }
 }
