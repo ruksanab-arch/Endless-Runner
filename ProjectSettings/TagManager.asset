@@ -5,10 +5,8 @@ TagManager:
   serializedVersion: 2
   tags:
   - Ground
-  - Rocks
-  - Gems
   - Obstacle
-  - Rock
+  - Gem
   layers:
   - Default
   - TransparentFX

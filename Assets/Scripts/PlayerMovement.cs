@@ -1,45 +1,82 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI; // Needed for UI elements like score
 
 public class PlayerMovement : MonoBehaviour
 {
-    public float forwardSpeed = 5f;
-    public float horizontalSpeed = 4f;
-    public float jumpForce = 5f;
+    private Rigidbody playerRb;
+    private Animator playerAnim;
 
-    private Rigidbody rb;
-    private Animator animator;
+    public float speed = 5f;      // Left/right movement speed
+    public float jumpForce = 7f;  // Jump strength
+    public float minX = -2f;      // Left boundary
+    public float maxX = 2f;       // Right boundary
+
     private bool isGrounded = true;
+
+    // Score
+    private int score = 0;
+    public Text scoreText; // Assign a UI Text in Inspector
 
     void Start()
     {
-        rb = GetComponent<Rigidbody>();
-        animator = GetComponent<Animator>();
+        playerRb = GetComponent<Rigidbody>();
+        playerAnim = GetComponent<Animator>();
+        UpdateScoreUI();
     }
 
     void Update()
     {
-        // Move forward constantly
-        transform.Translate(Vector3.forward * forwardSpeed * Time.deltaTime);
-
-        // Move left-right
+        // LEFT/RIGHT movement
         float horizontalInput = Input.GetAxis("Horizontal");
-        transform.Translate(Vector3.right * horizontalInput * horizontalSpeed * Time.deltaTime);
+        Vector3 newVelocity = new Vector3(horizontalInput * speed, playerRb.velocity.y, 0);
+        playerRb.velocity = newVelocity;
 
-        // Jumping
+        // Clamp player position within road boundaries
+        Vector3 clampedPos = transform.position;
+        clampedPos.x = Mathf.Clamp(clampedPos.x, minX, maxX);
+        transform.position = clampedPos;
+
+        // Running animation
+        playerAnim.SetBool("isRunning", horizontalInput != 0);
+
+        // Jump
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            playerRb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             isGrounded = false;
-            animator.SetTrigger("Jump");
+            playerAnim.SetTrigger("Jump");
         }
     }
 
-    void OnCollisionEnter(Collision collision)
+    private void OnCollisionEnter(Collision collision)
     {
-        // Ground check
         if (collision.gameObject.CompareTag("Ground"))
         {
             isGrounded = true;
+        }
+
+        if (collision.gameObject.CompareTag("Obstacle"))
+        {
+            Debug.Log("Hit Obstacle! Game Over!");
+            // Add game over logic here
+        }
+
+        if (collision.gameObject.CompareTag("Gem"))
+        {
+            Destroy(collision.gameObject); // Remove gem
+            score += 1;                    // Increase score
+            UpdateScoreUI();               // Update UI
+            Debug.Log("Gem Collected! Score: " + score);
+        }
+    }
+
+    void UpdateScoreUI()
+    {
+        if (scoreText != null)
+        {
+            scoreText.text = "Score: " + score;
         }
     }
 }
