@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using UnityEngine.SceneManagement; // For restarting or loading GameOver scene
+using UnityEngine.SceneManagement;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -16,7 +16,7 @@ public class PlayerMovement : MonoBehaviour
     public float maxX = 2f;
 
     private bool isGrounded = true;
-    public bool isGameOver = false; // ✅ added
+    public bool isGameOver = false;
 
     // Score
     private int score = 0;
@@ -32,23 +32,18 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        // ✅ Stop all movement when Game Over
         if (isGameOver) return;
 
-        // LEFT/RIGHT movement
         float horizontalInput = Input.GetAxis("Horizontal");
         Vector3 newVelocity = new Vector3(horizontalInput * speed, playerRb.velocity.y, 0);
         playerRb.velocity = newVelocity;
 
-        // Clamp player position within road boundaries
         Vector3 clampedPos = transform.position;
         clampedPos.x = Mathf.Clamp(clampedPos.x, minX, maxX);
         transform.position = clampedPos;
 
-        // Running animation
         playerAnim.SetBool("isRunning", horizontalInput != 0);
 
-        // Jump
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
             playerRb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
@@ -57,6 +52,7 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    // ✅ Keep this for physics collisions (ground, obstacle)
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
@@ -67,35 +63,40 @@ public class PlayerMovement : MonoBehaviour
         if (collision.gameObject.CompareTag("Obstacle"))
         {
             Debug.Log("Hit Obstacle! Game Over!");
-            GameOver(); // ✅ call game over function
+            GameOver();
         }
+    }
 
-        if (collision.gameObject.CompareTag("Gem"))
+    // ✅ NEW: Use Trigger for Gems (instead of collision)
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("Gem"))
         {
-            Destroy(collision.gameObject);
+            Destroy(other.gameObject);
             score += 1;
             UpdateScoreUI();
-            ScoreManager.Instance.AddCoins(1);
             Debug.Log("Gem Collected! Score: " + score);
+        }
+        if (ScoreManager.Instance != null)
+        {
+            ScoreManager.Instance.AddGems(1);
         }
     }
 
     public void GameOver()
     {
-        isGameOver = true; // ✅ stop update logic
+        isGameOver = true;
         playerRb.velocity = Vector3.zero;
-        playerRb.isKinematic = true; // ✅ freeze physics
-        // Optionally restart game after 2 seconds
-        Invoke(nameof(RestartGame), 2f);
+        playerRb.isKinematic = true;
+
         if (gameOverPanel != null)
-        {
             gameOverPanel.SetActive(true);
-        }
+
+        Invoke(nameof(RestartGame), 2f);
     }
 
     void RestartGame()
     {
-        // reload current scene
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 

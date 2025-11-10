@@ -6,12 +6,12 @@ using TMPro;
 public class ScoreManager : MonoBehaviour
 {
     public static ScoreManager Instance { get; private set; }
-    // Start is called before the first frame update
-    private const string COINS_KEY = "PlayerCoins";
-    public int Coins { get; private set; }
+
+    private const string GEMS_KEY = "PlayerGems";  // Renamed to match your purpose
+    public int Gems { get; private set; }
 
     [Header("UI Reference (Optional)")]
-    public TextMeshProUGUI coinText; // Drag UI text here in Inspector
+    public TextMeshProUGUI GemText; // Drag UI text here in Inspector
 
     private void Awake()
     {
@@ -24,35 +24,35 @@ public class ScoreManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        LoadCoins();
+        LoadGems();
     }
 
     private void Start()
     {
-        UpdateCoinUI();
+        UpdateGemUI();
     }
 
-    public void AddCoins(int amount)
+    public void AddGems(int amount)
     {
-        Coins += amount;
-        SaveCoins();
-        UpdateCoinUI();
+        Gems += amount;
+        SaveGems();
+        UpdateGemUI();
     }
 
-    public void SaveCoins()
+    public void SaveGems()
     {
-        PlayerPrefs.SetInt(COINS_KEY, Coins);
+        PlayerPrefs.SetInt(GEMS_KEY, Gems);
         PlayerPrefs.Save();
     }
 
-    public void LoadCoins()
+    public void LoadGems()
     {
-        Coins = PlayerPrefs.GetInt(COINS_KEY, 0);
+        Gems = PlayerPrefs.GetInt(GEMS_KEY, 0);
     }
 
-    private void UpdateCoinUI()
+    private void UpdateGemUI()
     {
-        if (coinText != null)
-            coinText.text = "Coins: " + Coins.ToString();
+        if (GemText != null)
+            GemText.text = "Gems: " + Gems.ToString();
     }
 }
