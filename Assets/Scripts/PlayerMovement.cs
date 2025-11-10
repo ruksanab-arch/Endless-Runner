@@ -75,6 +75,7 @@ public class PlayerMovement : MonoBehaviour
             Destroy(collision.gameObject);
             score += 1;
             UpdateScoreUI();
+            ScoreManager.Instance.AddCoins(1);
             Debug.Log("Gem Collected! Score: " + score);
         }
     }
