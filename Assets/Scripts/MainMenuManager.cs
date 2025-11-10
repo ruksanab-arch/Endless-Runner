@@ -15,12 +15,10 @@ public class MainMenuManager : MonoBehaviour
     void Update()
     {
 
-    }     public void OnPlayButton()
-    {
-        SceneManager.LoadScene(gameplaySceneName);
-    }
+    }    
      public void OnPlayButton()
     {
         SceneManager.LoadScene(gameplaySceneName);
     }
+     
 }
