@@ -7,15 +7,14 @@ public class ScoreManager : MonoBehaviour
 {
     public static ScoreManager Instance { get; private set; }
 
-    private const string GEMS_KEY = "PlayerGems";  // Renamed to match your purpose
+    private const string GEMS_KEY = "PlayerGems";
     public int Gems { get; private set; }
 
     [Header("UI Reference (Optional)")]
-    public TextMeshProUGUI GemText; // Drag UI text here in Inspector
+    public TextMeshProUGUI GemText; // Assign in Inspector
 
     private void Awake()
     {
-        // Singleton pattern (only one instance)
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -32,6 +31,7 @@ public class ScoreManager : MonoBehaviour
         UpdateGemUI();
     }
 
+    // 🪙 Add gems (called when player collects)
     public void AddGems(int amount)
     {
         Gems += amount;
@@ -39,6 +39,25 @@ public class ScoreManager : MonoBehaviour
         UpdateGemUI();
     }
 
+    // 💰 Check if player has enough gems
+    public bool HasEnoughGems(int amount)
+    {
+        return Gems >= amount;
+    }
+
+    // 🧾 Spend gems (for entry fee or shop)
+    public bool SpendGems(int amount)
+    {
+        if (!HasEnoughGems(amount))
+            return false;
+
+        Gems -= amount;
+        SaveGems();
+        UpdateGemUI();
+        return true;
+    }
+
+    // 🧩 Save & Load
     public void SaveGems()
     {
         PlayerPrefs.SetInt(GEMS_KEY, Gems);
@@ -50,6 +69,7 @@ public class ScoreManager : MonoBehaviour
         Gems = PlayerPrefs.GetInt(GEMS_KEY, 0);
     }
 
+    // 🔄 Update UI
     private void UpdateGemUI()
     {
         if (GemText != null)
