@@ -15,19 +15,21 @@ public class GameManager : MonoBehaviour
     public GameObject gameOverPanel;
 
     private void Awake()
+{
+    if (Instance == null)
     {
-        if (Instance == null)
-            Instance = this;
-        else
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        DontDestroyOnLoad(gameObject); // Persist across scenes
-        RemainingAttempts = MaxAttempts;
-        UpdateAttemptsUI();
+        Instance = this;
+        DontDestroyOnLoad(gameObject); // persist
     }
+    else
+    {
+        Destroy(gameObject); // destroy duplicate
+        return;
+    }
+
+    // Only initialize attempts if this is the first GameManager
+    RemainingAttempts = MaxAttempts;
+}
 
     public void OnPlayerDeath()
     {
