@@ -10,7 +10,7 @@ public class MainMenuManager : MonoBehaviour
     [SerializeField] private string gameplaySceneName = "GameScene";
 
     [Header("Entry Fee Settings")]
-    [SerializeField] private int entryFee = 20;
+    [SerializeField] private int entryFee = 0;
 
     [Header("UI References")]
     [SerializeField] private TextMeshProUGUI messageText; // Optional: show warning message
@@ -38,12 +38,12 @@ public class MainMenuManager : MonoBehaviour
             // Not enough gems
             if (messageText != null)
             {
-                messageText.text = "Not enough gems to play! (Need 20)";
+                messageText.text = "Not enough gems to play! (Need 0)";
                 messageText.color = Color.red;
             }
             else
             {
-                Debug.Log("Not enough gems to play! (Need 20)");
+                Debug.Log("Not enough gems to play! (Need 0)");
             }
         }
     }
