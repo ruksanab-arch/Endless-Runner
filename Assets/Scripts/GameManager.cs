@@ -15,21 +15,30 @@ public class GameManager : MonoBehaviour
     public GameObject gameOverPanel;
 
     private void Awake()
-{
-    if (Instance == null)
     {
-        Instance = this;
-        DontDestroyOnLoad(gameObject); // persist
-    }
-    else
-    {
-        Destroy(gameObject); // destroy duplicate
-        return;
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        RemainingAttempts = MaxAttempts;
+        SceneManager.sceneLoaded += OnSceneLoaded; // 👈 listen for scene reload
     }
 
-    // Only initialize attempts if this is the first GameManager
-    RemainingAttempts = MaxAttempts;
-}
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // Find UI again after scene reload
+        AttemptsText = GameObject.FindWithTag("AttemptsText")?.GetComponent<TextMeshProUGUI>();
+        gameOverPanel = GameObject.FindWithTag("GameOverPanel");
+
+        UpdateAttemptsUI();
+    }
 
     public void OnPlayerDeath()
     {
@@ -39,7 +48,6 @@ public class GameManager : MonoBehaviour
         if (RemainingAttempts > 0)
         {
             Debug.Log("Attempts left: " + RemainingAttempts);
-            // Restart level after 1 second
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
         else
@@ -53,7 +61,7 @@ public class GameManager : MonoBehaviour
     private void UpdateAttemptsUI()
     {
         if (AttemptsText != null)
-            AttemptsText.text = "Attempts: " + RemainingAttempts;
+            AttemptsText.text = $"Attempts: {RemainingAttempts}/{MaxAttempts}";
     }
 
     public void ResetAttempts()
