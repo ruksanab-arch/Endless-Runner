@@ -65,11 +65,7 @@ public class PlayerMovement : MonoBehaviour
             Debug.Log("Hit Obstacle! Game Over!");
             isGameOver = true;
             playerRb.velocity = Vector3.zero;
-            playerRb.isKinematic = true;
-
-            // Call GameManager to handle attempts
-            if (GameManager.Instance != null)
-                GameManager.Instance.OnPlayerDeath();
+            playerRb.isKinematic = true;   
         }
     }
 
@@ -81,10 +77,12 @@ public class PlayerMovement : MonoBehaviour
             score += 1;
             UpdateScoreUI();
 
-            if (ScoreManager.Instance != null)
-                ScoreManager.Instance.AddGems(1);
-
             Debug.Log("Gem Collected! Score: " + score);
+        }
+        else if (other.gameObject.CompareTag("Obstacle"))
+        {
+            Debug.Log("Player hit obstacle! Using one attempt.");
+            
         }
     }
 

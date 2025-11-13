@@ -2,29 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class ScoreManager : MonoBehaviour
 {
     public static ScoreManager Instance { get; private set; }
 
-    // Player data keys
     private const string GEMS_KEY = "PlayerGems";
-    private const string SCORE_KEY = "TotalScore";
-    private const string FIRST_ENTRY_KEY = "FirstEntry";
-
     public int Gems { get; private set; }
-    public int TotalScore { get; private set; }
 
-    [Header("UI (Optional, auto-detected if null)")]
-    public TextMeshProUGUI GemText;
-    public TextMeshProUGUI ScoreText;
-
-    [Header("Free Entry Settings")]
-    public int FreeGems = 50; // gems given on first entry
+    [Header("UI Reference (Optional)")]
+    public TextMeshProUGUI GemText; // Drag your LobbyScene text here (optional)
 
     private void Awake()
     {
-        // Singleton setup
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -33,39 +24,29 @@ public class ScoreManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-
-        // Load saved data
         LoadGems();
-        LoadScore();
-
-        // Give free gems on first entry
-        if (!PlayerPrefs.HasKey(FIRST_ENTRY_KEY))
-        {
-            Gems += FreeGems;
-            SaveGems();
-            PlayerPrefs.SetInt(FIRST_ENTRY_KEY, 1);
-            PlayerPrefs.Save();
-        }
     }
 
     private void Start()
     {
-        // Auto-find UI in scene if not assigned
-        if (GemText == null)
-        {
-            GemText = GameObject.Find("GemText")?.GetComponent<TextMeshProUGUI>();
-        }
-
-        if (ScoreText == null)
-        {
-            ScoreText = GameObject.Find("ScoreText")?.GetComponent<TextMeshProUGUI>();
-        }
-
         UpdateGemUI();
-        UpdateScoreUI();
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    // --------- Gem Methods ---------
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // Try to find the "GemText_Game" object automatically in new scenes
+        if (GemText == null)
+        {
+            var foundText = GameObject.Find("GemText_Game");
+            if (foundText != null)
+            {
+                GemText = foundText.GetComponent<TextMeshProUGUI>();
+                UpdateGemUI();
+            }
+        }
+    }
+
     public void AddGems(int amount)
     {
         Gems += amount;
@@ -73,72 +54,43 @@ public class ScoreManager : MonoBehaviour
         UpdateGemUI();
     }
 
-    public bool HasEnoughGems(int amount)
-    {
-        return Gems >= amount;
-    }
-
-    public bool SpendGems(int amount)
-    {
-        if (!HasEnoughGems(amount)) return false;
-
-        Gems -= amount;
-        SaveGems();
-        UpdateGemUI();
-        return true;
-    }
-
-    private void SaveGems()
+    public void SaveGems()
     {
         PlayerPrefs.SetInt(GEMS_KEY, Gems);
         PlayerPrefs.Save();
     }
 
-    private void LoadGems()
+    public void LoadGems()
     {
         Gems = PlayerPrefs.GetInt(GEMS_KEY, 0);
     }
 
-    public void UpdateGemUI()
+    private void UpdateGemUI()
     {
         if (GemText != null)
-            GemText.text = "Gems: " + Gems;
+            GemText.text = "Gems: " + Gems.ToString();
     }
 
-    public void SetGemText(TextMeshProUGUI newGemText)
+    public bool SpendGems(int amount)
     {
-        GemText = newGemText;
-        UpdateGemUI();
+        if (Gems >= amount)
+        {
+            Gems -= amount;
+            SaveGems();
+            UpdateGemUI();
+            Debug.Log(amount + " gems spent!");
+            return true;
+        }
+        else
+        {
+            Debug.Log("Not enough gems to spend!");
+            return false;
+        }
     }
 
-    // --------- Score Methods ---------
-    public void AddScore(int amount)
+    public void CheatAddGems()
     {
-        TotalScore += amount;
-        SaveScore();
-        UpdateScoreUI();
-    }
-
-    private void SaveScore()
-    {
-        PlayerPrefs.SetInt(SCORE_KEY, TotalScore);
-        PlayerPrefs.Save();
-    }
-
-    private void LoadScore()
-    {
-        TotalScore = PlayerPrefs.GetInt(SCORE_KEY, 0);
-    }
-
-    public void UpdateScoreUI()
-    {
-        if (ScoreText != null)
-            ScoreText.text = "Score: " + TotalScore;
-    }
-
-    public void SetScoreText(TextMeshProUGUI newScoreText)
-    {
-        ScoreText = newScoreText;
-        UpdateScoreUI();
+        AddGems(50);
+        Debug.Log("Cheat activated! +50 gems");
     }
 }

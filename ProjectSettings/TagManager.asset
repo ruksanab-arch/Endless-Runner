@@ -7,6 +7,8 @@ TagManager:
   - Ground
   - Obstacle
   - Gem
+  - GameOverPanel
+  - AttemptsText
   layers:
   - Default
   - TransparentFX
