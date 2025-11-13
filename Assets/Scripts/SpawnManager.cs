@@ -8,8 +8,8 @@ public class SpawnManager : MonoBehaviour
     public GameObject gemPrefab;
     private Vector3 spawnPosO = new Vector3(0, 0, 25);
     private Vector3 spawnPosG = new Vector3(0, 1, 55);
-    private float startDelay = 3;
-    private float repeatRate = 3;
+    private float startDelay = 2;
+    private float repeatRate = 2;
     private PlayerMovement playerMovementScript;
     // Start is called before the first frame update
     void Start()

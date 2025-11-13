@@ -5,20 +5,19 @@ using UnityEngine.SceneManagement;
 
 public class GameStartManager : MonoBehaviour
 {
-    // Entry cost in gems
-    public int entryCost = 20;
-
+    // Start is called before the first frame update
     public void StartGame()
     {
-        // Check if player has enough gems to start
-        if (ScoreManager.Instance.SpendGems(entryCost))
+        int entryGems = 20; // Entry cost
+
+        if (ScoreManager.Instance.SpendGems(entryGems))
         {
-            Debug.Log(entryCost + " gems spent! Starting game...");
+            Debug.Log(entryGems + " Gems spent! Starting game...");
             SceneManager.LoadScene("GameScene");
         }
         else
         {
-            Debug.Log("Not enough gems to start the game!");
+            Debug.Log("Not enough gems to play!");
         }
     }
 }

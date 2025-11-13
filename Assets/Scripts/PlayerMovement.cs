@@ -1,26 +1,34 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
-using UnityEngine.SceneManagement;
 
 public class PlayerMovement : MonoBehaviour
 {
     private Rigidbody playerRb;
     private Animator playerAnim;
 
+    [Header("Movement Settings")]
     public float speed = 5f;
     public float jumpForce = 7f;
     public float minX = -2f;
     public float maxX = 2f;
 
     private bool isGrounded = true;
+
+    // Internal game over flag
     public bool isGameOver = false;
 
-    // Score
+    [Header("Score Settings")]
     private int score = 0;
     public TMP_Text scoreText;
+    public GameObject gameOverPanel;
+
+    // Public property to access isGameOver
+    public bool IsGameOver
+    {
+        get { return isGameOver; }
+    }
 
     void Start()
     {
@@ -63,9 +71,9 @@ public class PlayerMovement : MonoBehaviour
         if (collision.gameObject.CompareTag("Obstacle"))
         {
             Debug.Log("Hit Obstacle! Game Over!");
-            isGameOver = true;
+            GameOver();
             playerRb.velocity = Vector3.zero;
-            playerRb.isKinematic = true;   
+            playerRb.isKinematic = true;
         }
     }
 
@@ -77,18 +85,30 @@ public class PlayerMovement : MonoBehaviour
             score += 1;
             UpdateScoreUI();
 
+            if (ScoreManager.Instance != null)
+                ScoreManager.Instance.AddGems(1);
+
             Debug.Log("Gem Collected! Score: " + score);
-        }
-        else if (other.gameObject.CompareTag("Obstacle"))
-        {
-            Debug.Log("Player hit obstacle! Using one attempt.");
-            
         }
     }
 
-    void UpdateScoreUI()
+    private void UpdateScoreUI()
     {
         if (scoreText != null)
             scoreText.text = "Score: " + score;
     }
+
+    // Method to set game over
+    public void GameOver()
+{
+    isGameOver = true;
+
+    // Stop player movement
+    playerRb.velocity = Vector3.zero;
+    playerRb.isKinematic = true;
+
+    // Show Game Over UI
+    if (gameOverPanel != null)
+        gameOverPanel.SetActive(true);
+}
 }
