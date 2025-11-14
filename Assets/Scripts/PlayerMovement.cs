@@ -36,14 +36,16 @@ public class PlayerMovement : MonoBehaviour
 
     public bool IsGameOver => isGameOver;
 
+    // ignore the very first obstacle hit (no attempt deducted)
+    private bool firstHitIgnored = false;
+
     void Start()
     {
         playerRb = GetComponent<Rigidbody>();
         playerAnim = GetComponent<Animator>();
 
-        // Load saved attempts
+        // Load saved attempts (fallback to maxAttempts)
         currentAttempts = PlayerPrefs.GetInt("AttemptsLeft", maxAttempts);
-
         if (currentAttempts < 0)
             currentAttempts = maxAttempts;
 
@@ -78,15 +80,17 @@ public class PlayerMovement : MonoBehaviour
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
+        {
             isGrounded = true;
+            return;
+        }
 
         if (collision.gameObject.CompareTag("Obstacle"))
         {
-            Debug.Log("Hit Obstacle!");
+            Debug.Log("Hit Obstacle! Calling GameOver()");
+            // DON'T immediately set isKinematic or zero velocity here.
+            // Let GameOver() decide whether to pause / stop the player.
             GameOver();
-
-            playerRb.velocity = Vector3.zero;
-            playerRb.isKinematic = true;
         }
     }
 
@@ -96,7 +100,6 @@ public class PlayerMovement : MonoBehaviour
         {
             Destroy(other.gameObject);
 
-            // Increase gem count
             gemScore += 1;
             UpdateScoreUI();
 
@@ -105,7 +108,7 @@ public class PlayerMovement : MonoBehaviour
 
             Debug.Log("Gem Collected! Total: " + gemScore);
 
-            // ⭐ WIN CONDITION → 10 Gems
+            // WIN CONDITION → 10 Gems
             if (gemScore >= 10)
             {
                 WinGame();
@@ -114,7 +117,7 @@ public class PlayerMovement : MonoBehaviour
     }
 
     // -----------------------------------------------------
-    // ⭐ WIN GAME LOGIC ⭐
+    // WIN GAME
     // -----------------------------------------------------
     void WinGame()
     {
@@ -123,7 +126,6 @@ public class PlayerMovement : MonoBehaviour
 
         winPanel.SetActive(true);
 
-        // Reward +20 Gems
         if (ScoreManager.Instance != null)
             ScoreManager.Instance.AddGems(20);
 
@@ -133,19 +135,41 @@ public class PlayerMovement : MonoBehaviour
         PlayerPrefs.DeleteKey("AttemptsLeft");
 
         UpdateScoreUI();
-        Time.timeScale = 0f; // Pause to show win panel
+        Time.timeScale = 0f;
     }
 
     // -----------------------------------------------------
-    // ⭐ GAME OVER LOGIC ⭐
+    // GAME OVER / ATTEMPTS LOGIC (modified)
     // -----------------------------------------------------
     public void GameOver()
     {
-        if (isGameOver) return;
+        // If this is the very first obstacle hit, ignore it — do NOT deduct attempts or pause
+        if (!firstHitIgnored)
+        {
+            firstHitIgnored = true;
+            Debug.Log("First obstacle hit ignored. Game continues. firstHitIgnored set = true.");
+            // Optionally give a feedback (e.g., small flash) instead of pausing — not implemented here.
+            return;
+        }
+
+        // From here on, treat collisions as real game-overs that deduct attempts.
+        if (isGameOver)
+        {
+            Debug.Log("GameOver() called but isGameOver already true; returning.");
+            return;
+        }
+
         isGameOver = true;
 
-        // Stop time
+        // Stop time & player movement for showing game over UI
         Time.timeScale = 0f;
+
+        // Stop player movement
+        if (playerRb != null)
+        {
+            playerRb.velocity = Vector3.zero;
+            playerRb.isKinematic = true;
+        }
 
         // Deduct attempt
         currentAttempts--;
@@ -155,21 +179,20 @@ public class PlayerMovement : MonoBehaviour
         PlayerPrefs.SetInt("AttemptsLeft", currentAttempts);
         PlayerPrefs.Save();
 
+        Debug.Log("Attempt deducted. Attempts left: " + currentAttempts);
+
         if (currentAttempts > 0)
         {
             gameOverPanel.SetActive(true);
-            Debug.Log("Game Over! Attempts left: " + currentAttempts);
+            Debug.Log("Showing gameOverPanel.");
         }
         else
         {
             noAttemptsPanel.SetActive(true);
-            Debug.Log("All attempts are over!");
+            Debug.Log("Showing noAttemptsPanel. All attempts over.");
 
-            // ⭐ Lose penalty
             if (ScoreManager.Instance != null)
                 ScoreManager.Instance.AddGems(-10);
-
-            Debug.Log("Penalty applied! -10 gems");
 
             StartCoroutine(ResetAttemptsAfterDelay(5f));
         }
@@ -178,7 +201,7 @@ public class PlayerMovement : MonoBehaviour
     }
 
     // -----------------------------------------------------
-    // ⭐ RESET ATTEMPTS AFTER COOLDOWN ⭐
+    // RESET ATTEMPTS AFTER COOLDOWN
     // -----------------------------------------------------
     IEnumerator ResetAttemptsAfterDelay(float delay)
     {
@@ -197,19 +220,25 @@ public class PlayerMovement : MonoBehaviour
         PlayerPrefs.SetInt("AttemptsLeft", currentAttempts);
         PlayerPrefs.Save();
 
-        countdownText.text = "Restarting...";
+        if (countdownText != null)
+            countdownText.text = "Restarting...";
+
         Time.timeScale = 1f;
 
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     // -----------------------------------------------------
-    // ⭐ RESTART GAME BUTTON ⭐
+    // RETRY BUTTON
     // -----------------------------------------------------
-    public void RestartGameButton()
+    public void RetryButton()
     {
         if (currentAttempts > 0)
         {
+            // Reset any temporary kinematic state before reload (safety)
+            if (playerRb != null)
+                playerRb.isKinematic = false;
+
             Time.timeScale = 1f;
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
@@ -220,7 +249,7 @@ public class PlayerMovement : MonoBehaviour
     }
 
     // -----------------------------------------------------
-    // ⭐ UI UPDATE ⭐
+    // UI UPDATE
     // -----------------------------------------------------
     public void UpdateAttemptUI()
     {

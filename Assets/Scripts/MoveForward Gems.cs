@@ -1,18 +1,35 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class MoveForwardGems : MonoBehaviour
 {
     private float speed = 30;
     private PlayerMovement playerMovementScript;
-    // Start is called before the first frame update
+
     void Start()
     {
-        playerMovementScript = GameObject.Find("Player").GetComponent<PlayerMovement>();
+        StartCoroutine(FindPlayer());
     }
 
-    // Update is called once per frame
+    IEnumerator FindPlayer()
+    {
+        // Keep searching until Player is found
+        while (playerMovementScript == null)
+        {
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+
+            if (playerObj != null)
+            {
+                playerMovementScript = playerObj.GetComponent<PlayerMovement>();
+                Debug.Log("Player found successfully!");
+                yield break;
+            }
+
+            Debug.Log("Player NOT found... retrying");
+            yield return new WaitForSeconds(0.1f);
+        }
+    }
+
     void Update()
     {
         if (playerMovementScript != null && !playerMovementScript.isGameOver)
