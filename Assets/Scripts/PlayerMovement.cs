@@ -15,7 +15,6 @@ public class PlayerMovement : MonoBehaviour
     public float minX = -2f;
     public float maxX = 2f;
     private bool isGrounded = true;
-
     public bool isGameOver = false;
 
     [Header("Gem Score Settings")]
@@ -39,8 +38,9 @@ public class PlayerMovement : MonoBehaviour
     [Header("Gem UI Animator")]
     public GemUIAnimator gemAnimator;
 
-    public bool IsGameOver => isGameOver;
     private bool firstHitIgnored = false;
+
+    public bool IsGameOver => isGameOver;
 
     void Start()
     {
@@ -48,12 +48,10 @@ public class PlayerMovement : MonoBehaviour
         playerAnim = GetComponent<Animator>();
 
         currentAttempts = PlayerPrefs.GetInt("AttemptsLeft", maxAttempts);
-        if (currentAttempts < 0)
-            currentAttempts = maxAttempts;
+        if (currentAttempts < 0) currentAttempts = maxAttempts;
 
         UpdateScoreUI();
         UpdateAttemptUI();
-
         Time.timeScale = 1f;
     }
 
@@ -116,8 +114,8 @@ public class PlayerMovement : MonoBehaviour
     {
         if (isGameOver) return;
         isGameOver = true;
-
         winPanel.SetActive(true);
+
         if (ScoreManager.Instance != null)
             ScoreManager.Instance.AddGems(20);
 
@@ -136,7 +134,6 @@ public class PlayerMovement : MonoBehaviour
 
         if (isGameOver) return;
         isGameOver = true;
-
         Time.timeScale = 0f;
 
         if (playerRb != null)
@@ -168,7 +165,6 @@ public class PlayerMovement : MonoBehaviour
     IEnumerator ResetAttemptsAfterDelay(float delay)
     {
         float remaining = delay;
-
         while (remaining > 0)
         {
             if (countdownText != null)
@@ -231,7 +227,6 @@ public class PlayerMovement : MonoBehaviour
     {
         Vector3 originalPos = heart.rectTransform.localPosition;
         Vector3 targetPos = originalPos + new Vector3(0, -50f, 0);
-
         float timer = 0f;
         float duration = 0.3f;
 

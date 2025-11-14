@@ -10,7 +10,7 @@ public class GemRefillManager : MonoBehaviour
 
     private int gems;
     private const int refillAmount = 20;
-    private const float refillInterval = 1800f; // 30 minutes = 1800 seconds
+    private const float refillInterval = 30f; // 30 minutes = 1800 seconds
     private float refillTimer = 0f;
 
     void Start()
