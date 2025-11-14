@@ -1,6 +1,6 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
 
@@ -16,7 +16,6 @@ public class PlayerMovement : MonoBehaviour
     public float maxX = 2f;
     private bool isGrounded = true;
 
-    // Internal game over flag
     public bool isGameOver = false;
 
     [Header("Gem Score Settings")]
@@ -27,16 +26,20 @@ public class PlayerMovement : MonoBehaviour
     public int maxAttempts = 3;
     public int currentAttempts = 3;
 
-    public TMP_Text attemptText;
-    public TMP_Text countdownText;
+    [Header("Hearts UI")]
+    public Image heart1;
+    public Image heart2;
+    public Image heart3;
 
+    public TMP_Text countdownText;
     public GameObject gameOverPanel;
     public GameObject noAttemptsPanel;
     public GameObject winPanel;
 
-    public bool IsGameOver => isGameOver;
+    [Header("Gem UI Animator")]
+    public GemUIAnimator gemAnimator;
 
-    // ignore the very first obstacle hit (no attempt deducted)
+    public bool IsGameOver => isGameOver;
     private bool firstHitIgnored = false;
 
     void Start()
@@ -44,7 +47,6 @@ public class PlayerMovement : MonoBehaviour
         playerRb = GetComponent<Rigidbody>();
         playerAnim = GetComponent<Animator>();
 
-        // Load saved attempts (fallback to maxAttempts)
         currentAttempts = PlayerPrefs.GetInt("AttemptsLeft", maxAttempts);
         if (currentAttempts < 0)
             currentAttempts = maxAttempts;
@@ -87,9 +89,6 @@ public class PlayerMovement : MonoBehaviour
 
         if (collision.gameObject.CompareTag("Obstacle"))
         {
-            Debug.Log("Hit Obstacle! Calling GameOver()");
-            // DON'T immediately set isKinematic or zero velocity here.
-            // Let GameOver() decide whether to pause / stop the player.
             GameOver();
         }
     }
@@ -99,110 +98,73 @@ public class PlayerMovement : MonoBehaviour
         if (other.gameObject.CompareTag("Gem"))
         {
             Destroy(other.gameObject);
-
-            gemScore += 1;
+            gemScore++;
             UpdateScoreUI();
 
             if (ScoreManager.Instance != null)
                 ScoreManager.Instance.AddGems(1);
 
-            Debug.Log("Gem Collected! Total: " + gemScore);
+            if (gemAnimator != null)
+                gemAnimator.PlayGemAnimation();
 
-            // WIN CONDITION → 10 Gems
             if (gemScore >= 10)
-            {
                 WinGame();
-            }
         }
     }
 
-    // -----------------------------------------------------
-    // WIN GAME
-    // -----------------------------------------------------
     void WinGame()
     {
         if (isGameOver) return;
         isGameOver = true;
 
         winPanel.SetActive(true);
-
         if (ScoreManager.Instance != null)
             ScoreManager.Instance.AddGems(20);
 
-        Debug.Log("WIN! +20 Gems");
-
-        // Reset attempts on win
         PlayerPrefs.DeleteKey("AttemptsLeft");
-
         UpdateScoreUI();
         Time.timeScale = 0f;
     }
 
-    // -----------------------------------------------------
-    // GAME OVER / ATTEMPTS LOGIC (modified)
-    // -----------------------------------------------------
     public void GameOver()
     {
-        // If this is the very first obstacle hit, ignore it — do NOT deduct attempts or pause
         if (!firstHitIgnored)
         {
             firstHitIgnored = true;
-            Debug.Log("First obstacle hit ignored. Game continues. firstHitIgnored set = true.");
-            // Optionally give a feedback (e.g., small flash) instead of pausing — not implemented here.
             return;
         }
 
-        // From here on, treat collisions as real game-overs that deduct attempts.
-        if (isGameOver)
-        {
-            Debug.Log("GameOver() called but isGameOver already true; returning.");
-            return;
-        }
-
+        if (isGameOver) return;
         isGameOver = true;
 
-        // Stop time & player movement for showing game over UI
         Time.timeScale = 0f;
 
-        // Stop player movement
         if (playerRb != null)
         {
             playerRb.velocity = Vector3.zero;
             playerRb.isKinematic = true;
         }
 
-        // Deduct attempt
-        currentAttempts--;
-        if (currentAttempts < 0)
-            currentAttempts = 0;
-
+        currentAttempts = Mathf.Max(0, currentAttempts - 1);
         PlayerPrefs.SetInt("AttemptsLeft", currentAttempts);
         PlayerPrefs.Save();
 
-        Debug.Log("Attempt deducted. Attempts left: " + currentAttempts);
+        UpdateAttemptUI();
 
         if (currentAttempts > 0)
         {
             gameOverPanel.SetActive(true);
-            Debug.Log("Showing gameOverPanel.");
         }
         else
         {
             noAttemptsPanel.SetActive(true);
-            Debug.Log("Showing noAttemptsPanel. All attempts over.");
-
             if (ScoreManager.Instance != null)
                 ScoreManager.Instance.AddGems(-10);
 
             StartCoroutine(ResetAttemptsAfterDelay(5f));
         }
-
-        UpdateAttemptUI();
     }
 
-    // -----------------------------------------------------
-    // RESET ATTEMPTS AFTER COOLDOWN
-    // -----------------------------------------------------
     IEnumerator ResetAttemptsAfterDelay(float delay)
     {
         float remaining = delay;
@@ -224,18 +186,13 @@ public class PlayerMovement : MonoBehaviour
             countdownText.text = "Restarting...";
 
         Time.timeScale = 1f;
-
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    // -----------------------------------------------------
-    // RETRY BUTTON
-    // -----------------------------------------------------
     public void RetryButton()
     {
         if (currentAttempts > 0)
         {
-            // Reset any temporary kinematic state before reload (safety)
             if (playerRb != null)
                 playerRb.isKinematic = false;
 
@@ -248,13 +205,47 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // -----------------------------------------------------
-    // UI UPDATE
-    // -----------------------------------------------------
-    public void UpdateAttemptUI()
+    void UpdateAttemptUI()
     {
-        if (attemptText != null)
-            attemptText.text = "Attempts: " + currentAttempts + " / " + maxAttempts;
+        AnimateHeart(heart1, currentAttempts >= 1);
+        AnimateHeart(heart2, currentAttempts >= 2);
+        AnimateHeart(heart3, currentAttempts >= 3);
+    }
+
+    void AnimateHeart(Image heart, bool show)
+    {
+        if (heart == null) return;
+
+        if (show)
+        {
+            heart.gameObject.SetActive(true);
+            heart.rectTransform.localScale = Vector3.one;
+        }
+        else
+        {
+            StartCoroutine(FallHeart(heart));
+        }
+    }
+
+    IEnumerator FallHeart(Image heart)
+    {
+        Vector3 originalPos = heart.rectTransform.localPosition;
+        Vector3 targetPos = originalPos + new Vector3(0, -50f, 0);
+
+        float timer = 0f;
+        float duration = 0.3f;
+
+        while (timer < duration)
+        {
+            heart.rectTransform.localPosition = Vector3.Lerp(originalPos, targetPos, timer / duration);
+            heart.rectTransform.localScale = Vector3.Lerp(Vector3.one, Vector3.zero, timer / duration);
+            timer += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        heart.rectTransform.localPosition = originalPos;
+        heart.rectTransform.localScale = Vector3.one;
+        heart.gameObject.SetActive(false);
     }
 
     private void UpdateScoreUI()

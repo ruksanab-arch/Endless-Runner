@@ -1,50 +1,48 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class GemUIAnimator : MonoBehaviour
 {
-    private RectTransform rt;
-    private bool isAnimating = false;
+    private RectTransform rect;
+    private Vector3 originalScale;
 
-    private void Awake()
+    [Header("Animation Settings")]
+    public float punchScale = 1.3f;
+    public float animationSpeed = 0.2f;
+
+    void Start()
     {
-        rt = GetComponent<RectTransform>();
+        rect = GetComponent<RectTransform>();
+        originalScale = rect.localScale;
     }
 
-    public void PlayCollectAnimation()
+    public void PlayGemAnimation()
     {
-        if (!isAnimating)
-            StartCoroutine(AnimateGem());
+        StopAllCoroutines();
+        StartCoroutine(AnimateGem());
     }
 
     private System.Collections.IEnumerator AnimateGem()
     {
-        isAnimating = true;
+        Vector3 bigScale = originalScale * punchScale;
 
-        // ----- SCALE UP -----
-        Vector3 originalScale = rt.localScale;
-        Vector3 bigScale = originalScale * 1.4f;
-
-        float t = 0;
-        while (t < 1f)
+        // Scale Up
+        float timer = 0f;
+        while (timer < animationSpeed)
         {
-            t += Time.deltaTime * 6f;
-            rt.localScale = Vector3.Lerp(originalScale, bigScale, t);
+            rect.localScale = Vector3.Lerp(originalScale, bigScale, timer / animationSpeed);
+            timer += Time.unscaledDeltaTime;
             yield return null;
         }
 
-        // ----- SCALE DOWN -----
-        t = 0;
-        while (t < 1f)
+        // Scale Down
+        timer = 0f;
+        while (timer < animationSpeed)
         {
-            t += Time.deltaTime * 6f;
-            rt.localScale = Vector3.Lerp(bigScale, originalScale, t);
+            rect.localScale = Vector3.Lerp(bigScale, originalScale, timer / animationSpeed);
+            timer += Time.unscaledDeltaTime;
             yield return null;
         }
 
-        isAnimating = false;
+        rect.localScale = originalScale;
     }
 }
-
