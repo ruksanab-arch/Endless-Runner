@@ -19,13 +19,10 @@ public class PlayerMovement : MonoBehaviour
     // Internal game over flag
     public bool isGameOver = false;
 
-    [Header("Score Settings")]
-    private int score = 0;
+    [Header("Gem Score Settings")]
+    private int gemScore = 0;
     public TMP_Text scoreText;
 
-    // -------------------------------
-    // ⭐ ATTEMPTS SYSTEM VARIABLES ⭐
-    // -------------------------------
     [Header("Attempts System")]
     public int maxAttempts = 3;
     public int currentAttempts = 3;
@@ -35,7 +32,7 @@ public class PlayerMovement : MonoBehaviour
 
     public GameObject gameOverPanel;
     public GameObject noAttemptsPanel;
-    // -------------------------------
+    public GameObject winPanel;
 
     public bool IsGameOver => isGameOver;
 
@@ -47,7 +44,6 @@ public class PlayerMovement : MonoBehaviour
         // Load saved attempts
         currentAttempts = PlayerPrefs.GetInt("AttemptsLeft", maxAttempts);
 
-        // FIX: Prevent negative values
         if (currentAttempts < 0)
             currentAttempts = maxAttempts;
 
@@ -99,20 +95,50 @@ public class PlayerMovement : MonoBehaviour
         if (other.gameObject.CompareTag("Gem"))
         {
             Destroy(other.gameObject);
-            score += 1;
 
+            // Increase gem count
+            gemScore += 1;
             UpdateScoreUI();
 
             if (ScoreManager.Instance != null)
                 ScoreManager.Instance.AddGems(1);
 
-            Debug.Log("Gem Collected! Score: " + score);
+            Debug.Log("Gem Collected! Total: " + gemScore);
+
+            // ⭐ WIN CONDITION → 10 Gems
+            if (gemScore >= 10)
+            {
+                WinGame();
+            }
         }
     }
 
-    // -------------------------------
+    // -----------------------------------------------------
+    // ⭐ WIN GAME LOGIC ⭐
+    // -----------------------------------------------------
+    void WinGame()
+    {
+        if (isGameOver) return;
+        isGameOver = true;
+
+        winPanel.SetActive(true);
+
+        // Reward +20 Gems
+        if (ScoreManager.Instance != null)
+            ScoreManager.Instance.AddGems(20);
+
+        Debug.Log("WIN! +20 Gems");
+
+        // Reset attempts on win
+        PlayerPrefs.DeleteKey("AttemptsLeft");
+
+        UpdateScoreUI();
+        Time.timeScale = 0f; // Pause to show win panel
+    }
+
+    // -----------------------------------------------------
     // ⭐ GAME OVER LOGIC ⭐
-    // -------------------------------
+    // -----------------------------------------------------
     public void GameOver()
     {
         if (isGameOver) return;
@@ -123,15 +149,12 @@ public class PlayerMovement : MonoBehaviour
 
         // Deduct attempt
         currentAttempts--;
-
-        // Prevent negative attempts
         if (currentAttempts < 0)
             currentAttempts = 0;
 
         PlayerPrefs.SetInt("AttemptsLeft", currentAttempts);
         PlayerPrefs.Save();
 
-        // If attempts still left → show normal GameOver panel
         if (currentAttempts > 0)
         {
             gameOverPanel.SetActive(true);
@@ -139,27 +162,24 @@ public class PlayerMovement : MonoBehaviour
         }
         else
         {
-            // No attempts left → show NO ATTEMPTS panel
             noAttemptsPanel.SetActive(true);
-
             Debug.Log("All attempts are over!");
 
-            // ⭐ Apply −10 gem penalty
+            // ⭐ Lose penalty
             if (ScoreManager.Instance != null)
                 ScoreManager.Instance.AddGems(-10);
 
             Debug.Log("Penalty applied! -10 gems");
 
-            // Start countdown + then reset
-            StartCoroutine(ResetAttemptsAfterDelay(30f));
+            StartCoroutine(ResetAttemptsAfterDelay(5f));
         }
 
         UpdateAttemptUI();
     }
 
-    // -------------------------------
-    // ⭐ COOLDOWN + RESET ATTEMPTS ⭐
-    // -------------------------------
+    // -----------------------------------------------------
+    // ⭐ RESET ATTEMPTS AFTER COOLDOWN ⭐
+    // -----------------------------------------------------
     IEnumerator ResetAttemptsAfterDelay(float delay)
     {
         float remaining = delay;
@@ -173,7 +193,6 @@ public class PlayerMovement : MonoBehaviour
             remaining -= 1f;
         }
 
-        // Reset attempts
         currentAttempts = maxAttempts;
         PlayerPrefs.SetInt("AttemptsLeft", currentAttempts);
         PlayerPrefs.Save();
@@ -184,9 +203,9 @@ public class PlayerMovement : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    // -------------------------------
-    // ⭐ PUBLIC RESTART BUTTON ⭐
-    // -------------------------------
+    // -----------------------------------------------------
+    // ⭐ RESTART GAME BUTTON ⭐
+    // -----------------------------------------------------
     public void RestartGameButton()
     {
         if (currentAttempts > 0)
@@ -200,9 +219,9 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // -------------------------------
-    // ⭐ UI UPDATE METHODS ⭐
-    // -------------------------------
+    // -----------------------------------------------------
+    // ⭐ UI UPDATE ⭐
+    // -----------------------------------------------------
     public void UpdateAttemptUI()
     {
         if (attemptText != null)
@@ -212,6 +231,6 @@ public class PlayerMovement : MonoBehaviour
     private void UpdateScoreUI()
     {
         if (scoreText != null)
-            scoreText.text = "Score: " + score;
+            scoreText.text = "Gems: " + gemScore;
     }
 }
